@@ -629,7 +629,7 @@ def install_node(env_dir, src_dir, opt):
 
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
-        download_node_src(node_url, src_dir, opt, prefix)
+        download_node_src(get_node_src_url(opt.node), src_dir, opt, prefix)
 
     logger.info('.', extra=dict(continued=True))
 
