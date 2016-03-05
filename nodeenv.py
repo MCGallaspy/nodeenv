@@ -11,18 +11,19 @@
 """
 
 import contextlib
+import glob
 import io
-import sys
-import os
-import re
-import stat
 import logging
 import operator
 import optparse
-import subprocess
-import tarfile
+import os
 import pipes
 import platform
+import re
+import subprocess
+import stat
+import sys
+import tarfile
 
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -530,6 +531,18 @@ def download_node_src(node_url, src_dir, opt, prefix):
         tarfile_obj.extractall(src_dir, extract_list)
 
 
+def download_node_bin(node_url, src_dir, opt, prefix):
+    filename = node_url.split('/')[-1]
+    node_bin = urlopen(node_url)
+    base_dir = os.path.join(src_dir, '%s-v%s' % (prefix, opt.node))
+    try:
+        os.makedirs(base_dir)
+    except os.error as e:
+        logger.info('Ignored os.makedirs error: %s' % str(e))
+    with open(os.path.join(base_dir, filename), 'wb') as f:
+        f.write(node_bin.read())
+
+
 def urlopen(url):
     home_url = "https://github.com/ekalinin/nodeenv/"
     headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
@@ -546,7 +559,8 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     """
     logger.info('.', extra=dict(continued=True))
     prefix = get_binary_prefix()
-    callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
+    for path in glob.glob(os.path.join(src_dir, '%s-v*' % prefix)):
+        callit(['cp', '-a', path, env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 
@@ -624,18 +638,15 @@ def install_node(env_dir, src_dir, opt):
 
     if opt.prebuilt:
         node_url = get_node_bin_url(opt.node)
-    else:
-        node_url = get_node_src_url(opt.node)
-
-    # get src if not downloaded yet
-    if not os.path.exists(node_src_dir):
-        download_node_src(node_url, src_dir, opt, prefix)
-
-    logger.info('.', extra=dict(continued=True))
-
-    if opt.prebuilt:
+        logger.info('.', extra=dict(continued=True))
+        download_node_bin(node_url, src_dir, opt, prefix)
         copy_node_from_prebuilt(env_dir, src_dir)
     else:
+        # get src if not downloaded yet
+        node_url = get_node_src_url(opt.node)
+        logger.info('.', extra=dict(continued=True))
+        if not os.path.exists(node_src_dir):
+            download_node_src(node_url, src_dir, opt, prefix)
         build_node_from_src(env_dir, src_dir, node_src_dir, opt)
 
     logger.info(' done.')
