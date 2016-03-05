@@ -726,6 +726,13 @@ def install_activate(env_dir, opt):
 
     shim_node = join(bin_dir, "node")
     shim_nodejs = join(bin_dir, "nodejs")
+
+    for dir_ in (shim_node, shim_nodejs):
+        try:
+            os.makedirs(dir_)
+        except os.error:
+            pass
+
     if opt.node == "system":
         env = os.environ.copy()
         env.update({'PATH': remove_env_bin_from_path(env['PATH'], bin_dir)})
