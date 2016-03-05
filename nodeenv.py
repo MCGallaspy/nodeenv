@@ -559,8 +559,9 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     """
     logger.info('.', extra=dict(continued=True))
     prefix = get_binary_prefix()
+    bin_dir = join(env_dir, 'bin')
     for path in glob.glob(os.path.join(src_dir, '%s-v*' % prefix)):
-        callit(['cp', '-a', path, env_dir], True, env_dir)
+        callit(['cp', '-a', path, bin_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 
@@ -755,7 +756,7 @@ def install_activate(env_dir, opt):
         need_append = 0 if name in ('node', 'shim') else opt.python_virtualenv
         writefile(file_path, content, append=need_append)
 
-    if not os.path.exists(shim_nodejs):
+    if not os.path.exists(shim_nodejs) and hasattr(os, 'symlink'):
         os.symlink("node", shim_nodejs)
 
 
